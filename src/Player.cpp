@@ -7,9 +7,6 @@ Player::Player(float x, float y) {
     velocity = {0, 0};
 
     texture = LoadTexture("assets/player.png");
-    std::cout << "Sprite size: " << texture.width << "x" << texture.height
-              << std::endl;
-
     // for pixel art sharpness
     SetTextureFilter(texture, TEXTURE_FILTER_POINT);
 }
@@ -17,22 +14,49 @@ Player::Player(float x, float y) {
 void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
     // Horizontal movement
     if (IsKeyDown(KEY_A))
-        velocity.x = -moveSpeed;
+        xMove = -moveSpeed;
     else if (IsKeyDown(KEY_D))
-        velocity.x = moveSpeed;
+        xMove = moveSpeed;
     else
-        velocity.x = 0;
+        xMove = 0.0f;
 
-    // If jump is pressed, reset the timer
-    if (IsKeyPressed(KEY_SPACE)) {
-        timeSinceJumpPressed = 0.0f;
+    if (xMove > 0)
+        facing = 1;
+    else if (xMove < 0)
+        facing = -1;
+
+    timeSinceLastDash += deltaTime;
+    if (IsKeyPressed(KEY_LEFT_SHIFT) && !isDashing &&
+        timeSinceLastDash >= dashCooldown) {
+        isDashing = true;
+        dashTime = 0.0f;
+        timeSinceLastDash = 0.0f;
+    }
+    if (isDashing) {
+        dashTime += deltaTime;
+        // if not moving default dash right
+        if (facing > 0)
+            xMove = dashSpeed;
+        else if (facing < 0)
+            xMove = -dashSpeed;
+
+        if (dashTime >= dashDuration) {
+            isDashing = false;
+        }
+        velocity.x = xMove;
     } else {
-        timeSinceJumpPressed += deltaTime;
+        if (IsKeyPressed(KEY_SPACE)) {
+            timeSinceJumpPressed = 0.0f;
+        } else {
+            timeSinceJumpPressed += deltaTime;
+        }
+        // Gravity
+        velocity.y += gravity * deltaTime;
+
+        velocity.x = xMove;
     }
 
-    // Gravity
-    velocity.y += gravity * deltaTime;
-
+    // If jump is pressed, reset the timer
     // predict future position
     Rectangle playerRect = GetCollisionRect();
     float futureY = position.y + velocity.y * deltaTime;
@@ -81,7 +105,7 @@ void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
 }
 
 Rectangle Player::GetCollisionRect() const {
-    float hitboxWidth = 10;
+    float hitboxWidth = 10 * desiredScale;
     float hitboxHeight = height;
 
     float offsetX = (width - hitboxWidth) / 2.0f;
@@ -92,7 +116,7 @@ Rectangle Player::GetCollisionRect() const {
 
 void Player::Draw() const {
     // Source: draw the full texture
-    Rectangle source = {0.0f, 0.0f, (float)texture.width,
+    Rectangle source = {0.0f, 0.0f, (float)texture.width * facing,
                         (float)texture.height};
 
     // Destination: where and how big to draw on screen
@@ -104,7 +128,8 @@ void Player::Draw() const {
     // Rotation = 0, Color = WHITE (no tint)
     DrawTexturePro(texture, source, dest, origin, 0.0f, WHITE);
 
-    // TO SHOW HITBOX: DrawRectangleRec(GetCollisionRect(), Fade(RED, 0.4f));
+    // TO SHOW HITBOX:
+    // DrawRectangleRec(GetCollisionRect(), Fade(RED, 0.4f));
 }
 
 Player::~Player() { UnloadTexture(texture); }
