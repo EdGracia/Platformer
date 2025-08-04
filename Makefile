@@ -7,7 +7,7 @@ LDFLAGS = -L$(RAYLIB_PATH)/lib -lraylib -framework CoreVideo -framework IOKit -f
 SRC = $(wildcard src/*.cpp)
 OBJ = $(SRC:src/%.cpp=build/%.o)
 
-TARGET = game
+TARGET = main
 
 all: $(TARGET)
 
