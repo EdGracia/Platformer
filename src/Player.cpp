@@ -133,6 +133,8 @@ void Player::UpdateState() {
             animation.Set(0, 4, 0.2f); // Often just one frame
             break;
         case PlayerState::Falling:
+            currentTexture = jumpTexture;
+            animation.Set(0, 4, 0.2f);
             break;
         case PlayerState::Dashing:
             break;
@@ -196,4 +198,8 @@ void Player::Draw() const {
     // DrawRectangleLines(dest.x, dest.y, abs(dest.width), dest.height, BLUE);
 }
 
-Player::~Player() { UnloadTexture(idleTexture); }
+Player::~Player() {
+    UnloadTexture(idleTexture);
+    UnloadTexture(walkTexture);
+    UnloadTexture(jumpTexture);
+}

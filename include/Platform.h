@@ -9,9 +9,19 @@ class Platform {
         void Draw() const;
         Rectangle GetBounds() const;
 
+        static void LoadTileset();
+        static void UnloadTileset();
+
+        bool IsFloatingPlatform() const;
+        int GetTileRow(int y) const;
+        int GetTileCol(int x) const;
+
     private:
-        float x, y;
+        Vector2 position;
         float width, height;
+
+        static Texture2D tileset;
+        static constexpr int TILE_SIZE = 32;
 };
 
 #endif
