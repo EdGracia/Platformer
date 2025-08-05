@@ -25,7 +25,6 @@ int main() {
 
         float delta = GetFrameTime();
         player.Update(delta, platforms);
-        player.UpdateAnimation(delta);
 
         // Draw Platforms
         for (const Platform &platform : platforms) {

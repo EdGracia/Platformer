@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "Physics.h"
 #include "iostream"
 #include "raylib.h"
 
@@ -12,17 +13,16 @@ Player::Player(float x, float y) {
     // for pixel art sharpness
     SetTextureFilter(idleTexture, TEXTURE_FILTER_POINT);
 
-    idleFrameWidth = idleTexture.width / idleFrameCount;
-    idleFrameHeight = idleTexture.height;
+    // idle anim
+    animation.Set(0, 4, 0.2f);
 
-    float spriteWidth = idleFrameWidth * desiredScale;
-    float spriteHeight = idleFrameHeight * desiredScale;
+    float spriteWidth = SPRITE_FRAME_WIDTH * desiredScale;
 
     offsetX = (spriteWidth - hitboxWidth * desiredScale) / 2.0f;
     offsetY = 46 * desiredScale;
 }
 
-void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
+void Player::HandleInput(float deltaTime) {
     // Horizontal movement input
     if (IsKeyDown(KEY_A))
         xMove = -moveSpeed;
@@ -39,25 +39,12 @@ void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
     // Setting up dash variables
     timeSinceLastDash += deltaTime;
 
-    if (IsKeyPressed(KEY_LEFT_SHIFT) && !isDashing &&
+    if (IsKeyPressed(KEY_LEFT_SHIFT) && state != PlayerState::Dashing &&
         timeSinceLastDash >= dashCooldown && !hasDashed) {
-        isDashing = true;
+        state = PlayerState::Dashing;
         dashTime = 0.0f;
         timeSinceLastDash = 0.0f;
         hasDashed = true;
-    }
-    if (isDashing) {
-        dashTime += deltaTime;
-        // if not moving default dash right
-        if (facing > 0)
-            xMove = dashSpeed;
-        else if (facing < 0)
-            xMove = -dashSpeed;
-
-        if (dashTime >= dashDuration) {
-            isDashing = false;
-        }
-        velocity.x = xMove;
     }
 
     if (IsKeyPressed(KEY_SPACE)) {
@@ -65,65 +52,100 @@ void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
     } else {
         timeSinceJumpPressed += deltaTime;
     }
-    // Gravity
+}
+
+void Player::UpdateDash(float deltaTime) {
+    if (state == PlayerState::Dashing) {
+        dashTime += deltaTime;
+
+        if (facing > 0)
+            velocity.x = dashSpeed;
+        else if (facing < 0)
+            velocity.x = -dashSpeed;
+
+        if (dashTime >= dashDuration)
+            state = PlayerState::Falling; // or Jumping if still rising
+    }
+}
+
+void Player::ApplyGravity(float deltaTime) {
+
     velocity.y += gravity * deltaTime;
+}
 
-    velocity.x = xMove;
-
+void Player::ResolvePlatformCollisions(const std::vector<Platform> &platforms,
+                                       float deltaTime) {
     // predict future position
     Rectangle playerRect = GetCollisionRect();
+    std::cout << "deltaTime in collision: " << deltaTime << std::endl;
     Rectangle futureRect = {playerRect.x, playerRect.y + velocity.y * deltaTime,
                             playerRect.width, playerRect.height};
-
-    // Reset ground state
-    isOnGround = false;
 
     // Check for platform collisions
     for (const Platform &platform : platforms) {
         Rectangle platformBounds = platform.GetBounds();
-        bool fallingThroughPlatform =
-            velocity.y > 0 &&
-            playerRect.y + playerRect.height <=
-                platformBounds.y && // player is above platform
-            futureRect.y + futureRect.height >=
-                platformBounds.y && // player will pass through platform top
-            playerRect.x + playerRect.width > platformBounds.x &&
-            playerRect.x < platformBounds.x + platformBounds.width;
 
+        bool fallingThroughPlatform = Physics::ShouldLandOnPlatform(
+            playerRect, futureRect, platformBounds, velocity.y);
         if (fallingThroughPlatform) {
             // Snap player to platform
             position.y = platformBounds.y - hitboxHeight * desiredScale;
             velocity.y = 0;
-            isOnGround = true;
+
+            if (state != PlayerState::Dashing)
+                state = (xMove == 0) ? PlayerState::Idle : PlayerState::Walking;
+
+            timeSinceLeftGround = 0.0f;
+            hasDashed = false;
             break;
         }
     }
+}
 
-    if (isOnGround) {
-        timeSinceLeftGround = 0.0f;
-        hasDashed = false;
-    } else
+void Player::UpdateState() {
+    if (state != PlayerState::Dashing) {
+        if (velocity.y < 0) {
+            state = PlayerState::Jumping;
+        } else if (velocity.y > 0) {
+            state = PlayerState::Falling;
+        } else if (xMove != 0) {
+            state = PlayerState::Walking;
+        } else {
+            state = PlayerState::Idle;
+        }
+    }
+}
+
+void Player::HandleJump(float deltaTime) {
+    if (state == PlayerState::Falling || state == PlayerState::Jumping) {
         timeSinceLeftGround += deltaTime;
-    // Jump
+    }
+
     if (timeSinceLeftGround <= coyoteTime &&
         timeSinceJumpPressed <= jumpBufferTime) {
         velocity.y = jumpForce;
-        isOnGround = false;
+        state = PlayerState::Jumping;
         timeSinceLeftGround = coyoteTime + 1.0f;
     }
+}
+
+void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
+    animation.Update(deltaTime);
+    HandleInput(deltaTime);
+    UpdateDash(deltaTime);
+
+    // Apply horizontal movement
+    if (state != PlayerState::Dashing)
+        velocity.x = xMove;
+
+    ApplyGravity(deltaTime);
+    ResolvePlatformCollisions(platforms, deltaTime);
+    HandleJump(deltaTime);
+    UpdateState();
 
     // Update position
     position.x += velocity.x * deltaTime;
     position.y += velocity.y * deltaTime;
-}
-
-void Player::UpdateAnimation(float deltaTime) {
-    idleFrameTimer += deltaTime;
-
-    if (idleFrameTimer >= idleFrameTime) {
-        idleFrameTimer = 0.0f;
-        idleCurrentFrame = (idleCurrentFrame + 1) % idleFrameCount;
-    }
 }
 
 Rectangle Player::GetCollisionRect() const {
@@ -134,19 +156,16 @@ Rectangle Player::GetCollisionRect() const {
 
 void Player::Draw() const {
     // Source: draw the full texture
-    Rectangle source = {(float)idleCurrentFrame * 128, 0.0f,
-                        (float)128 * facing, 128};
-
+    Rectangle source = animation.GetFrameSource(SPRITE_FRAME_WIDTH,
+                                                SPRITE_FRAME_HEIGHT, facing);
     // Destination: where and how big to draw on screen
     Rectangle dest = {position.x - offsetX, position.y - offsetY,
-                      128 * desiredScale * facing, 128 * desiredScale};
-
+                      SPRITE_FRAME_WIDTH * desiredScale * facing,
+                      SPRITE_FRAME_HEIGHT * desiredScale};
     // Origin: anchor point (top-left corner)
     Vector2 origin = {0.0f, 0.0f};
-
     // Rotation = 0, Color = WHITE (no tint)
     DrawTexturePro(idleTexture, source, dest, origin, 0.0f, WHITE);
-
     // TO SHOW HITBOX:
     DrawRectangleRec(GetCollisionRect(), Fade(RED, 0.4f));
     DrawRectangleLines(dest.x, dest.y, abs(dest.width), dest.height, BLUE);
