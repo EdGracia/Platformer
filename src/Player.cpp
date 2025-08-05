@@ -6,13 +6,24 @@ Player::Player(float x, float y) {
     position = {x, y};
     velocity = {0, 0};
 
-    texture = LoadTexture("assets/player.png");
+    // texture = LoadTexture("assets/player.png");
+    idleTexture = LoadTexture("assets/player_animations/Idle.png");
+
     // for pixel art sharpness
-    SetTextureFilter(texture, TEXTURE_FILTER_POINT);
+    SetTextureFilter(idleTexture, TEXTURE_FILTER_POINT);
+
+    idleFrameWidth = idleTexture.width / idleFrameCount;
+    idleFrameHeight = idleTexture.height;
+
+    float spriteWidth = idleFrameWidth * desiredScale;
+    float spriteHeight = idleFrameHeight * desiredScale;
+
+    offsetX = (spriteWidth - hitboxWidth * desiredScale) / 2.0f;
+    offsetY = 46 * desiredScale;
 }
 
 void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
-    // Horizontal movement
+    // Horizontal movement input
     if (IsKeyDown(KEY_A))
         xMove = -moveSpeed;
     else if (IsKeyDown(KEY_D))
@@ -25,12 +36,15 @@ void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
     else if (xMove < 0)
         facing = -1;
 
+    // Setting up dash variables
     timeSinceLastDash += deltaTime;
+
     if (IsKeyPressed(KEY_LEFT_SHIFT) && !isDashing &&
-        timeSinceLastDash >= dashCooldown) {
+        timeSinceLastDash >= dashCooldown && !hasDashed) {
         isDashing = true;
         dashTime = 0.0f;
         timeSinceLastDash = 0.0f;
+        hasDashed = true;
     }
     if (isDashing) {
         dashTime += deltaTime;
@@ -44,24 +58,22 @@ void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
             isDashing = false;
         }
         velocity.x = xMove;
-    } else {
-        if (IsKeyPressed(KEY_SPACE)) {
-            timeSinceJumpPressed = 0.0f;
-        } else {
-            timeSinceJumpPressed += deltaTime;
-        }
-        // Gravity
-        velocity.y += gravity * deltaTime;
-
-        velocity.x = xMove;
     }
 
-    // If jump is pressed, reset the timer
+    if (IsKeyPressed(KEY_SPACE)) {
+        timeSinceJumpPressed = 0.0f;
+    } else {
+        timeSinceJumpPressed += deltaTime;
+    }
+    // Gravity
+    velocity.y += gravity * deltaTime;
+
+    velocity.x = xMove;
+
     // predict future position
     Rectangle playerRect = GetCollisionRect();
-    float futureY = position.y + velocity.y * deltaTime;
-    Rectangle futureRect = {playerRect.x, futureY, playerRect.width,
-                            playerRect.height};
+    Rectangle futureRect = {playerRect.x, playerRect.y + velocity.y * deltaTime,
+                            playerRect.width, playerRect.height};
 
     // Reset ground state
     isOnGround = false;
@@ -80,21 +92,22 @@ void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
 
         if (fallingThroughPlatform) {
             // Snap player to platform
-            position.y = platformBounds.y - playerRect.height;
+            position.y = platformBounds.y - hitboxHeight * desiredScale;
             velocity.y = 0;
             isOnGround = true;
             break;
         }
     }
 
-    if (isOnGround)
+    if (isOnGround) {
         timeSinceLeftGround = 0.0f;
-    else
+        hasDashed = false;
+    } else
         timeSinceLeftGround += deltaTime;
     // Jump
     if (timeSinceLeftGround <= coyoteTime &&
         timeSinceJumpPressed <= jumpBufferTime) {
-        velocity.y = -400;
+        velocity.y = jumpForce;
         isOnGround = false;
         timeSinceLeftGround = coyoteTime + 1.0f;
     }
@@ -104,32 +117,39 @@ void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
     position.y += velocity.y * deltaTime;
 }
 
+void Player::UpdateAnimation(float deltaTime) {
+    idleFrameTimer += deltaTime;
+
+    if (idleFrameTimer >= idleFrameTime) {
+        idleFrameTimer = 0.0f;
+        idleCurrentFrame = (idleCurrentFrame + 1) % idleFrameCount;
+    }
+}
+
 Rectangle Player::GetCollisionRect() const {
-    float hitboxWidth = 10 * desiredScale;
-    float hitboxHeight = height;
 
-    float offsetX = (width - hitboxWidth) / 2.0f;
-
-    return Rectangle{position.x + offsetX, // center the narrow hitbox
-                     position.y, hitboxWidth, hitboxHeight};
+    return Rectangle{position.x, position.y, hitboxWidth * desiredScale,
+                     hitboxHeight * desiredScale};
 }
 
 void Player::Draw() const {
     // Source: draw the full texture
-    Rectangle source = {0.0f, 0.0f, (float)texture.width * facing,
-                        (float)texture.height};
+    Rectangle source = {(float)idleCurrentFrame * 128, 0.0f,
+                        (float)128 * facing, 128};
 
     // Destination: where and how big to draw on screen
-    Rectangle dest = {position.x, position.y, width, height};
+    Rectangle dest = {position.x - offsetX, position.y - offsetY,
+                      128 * desiredScale * facing, 128 * desiredScale};
 
     // Origin: anchor point (top-left corner)
     Vector2 origin = {0.0f, 0.0f};
 
     // Rotation = 0, Color = WHITE (no tint)
-    DrawTexturePro(texture, source, dest, origin, 0.0f, WHITE);
+    DrawTexturePro(idleTexture, source, dest, origin, 0.0f, WHITE);
 
     // TO SHOW HITBOX:
-    // DrawRectangleRec(GetCollisionRect(), Fade(RED, 0.4f));
+    DrawRectangleRec(GetCollisionRect(), Fade(RED, 0.4f));
+    DrawRectangleLines(dest.x, dest.y, abs(dest.width), dest.height, BLUE);
 }
 
-Player::~Player() { UnloadTexture(texture); }
+Player::~Player() { UnloadTexture(idleTexture); }
