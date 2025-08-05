@@ -9,9 +9,13 @@ Player::Player(float x, float y) {
 
     // texture = LoadTexture("assets/player.png");
     idleTexture = LoadTexture("assets/player_animations/Idle.png");
+    walkTexture = LoadTexture("assets/player_animations/Walk.png");
+    jumpTexture = LoadTexture("assets/player_animations/Jump.png");
 
     // for pixel art sharpness
     SetTextureFilter(idleTexture, TEXTURE_FILTER_POINT);
+    SetTextureFilter(walkTexture, TEXTURE_FILTER_POINT);
+    SetTextureFilter(jumpTexture, TEXTURE_FILTER_POINT);
 
     // idle anim
     animation.Set(0, 4, 0.2f);
@@ -114,6 +118,27 @@ void Player::UpdateState() {
             state = PlayerState::Idle;
         }
     }
+    if (state != lastState) {
+        switch (state) {
+        case PlayerState::Idle:
+            currentTexture = idleTexture;
+            animation.Set(0, 3, 0.2f); // row, frame count, frame time
+            break;
+        case PlayerState::Walking:
+            currentTexture = walkTexture;
+            animation.Set(0, 7, 0.1f);
+            break;
+        case PlayerState::Jumping:
+            currentTexture = jumpTexture;
+            animation.Set(0, 4, 0.2f); // Often just one frame
+            break;
+        case PlayerState::Falling:
+            break;
+        case PlayerState::Dashing:
+            break;
+        }
+        lastState = state;
+    }
 }
 
 void Player::HandleJump(float deltaTime) {
@@ -165,10 +190,10 @@ void Player::Draw() const {
     // Origin: anchor point (top-left corner)
     Vector2 origin = {0.0f, 0.0f};
     // Rotation = 0, Color = WHITE (no tint)
-    DrawTexturePro(idleTexture, source, dest, origin, 0.0f, WHITE);
+    DrawTexturePro(currentTexture, source, dest, origin, 0.0f, WHITE);
     // TO SHOW HITBOX:
-    DrawRectangleRec(GetCollisionRect(), Fade(RED, 0.4f));
-    DrawRectangleLines(dest.x, dest.y, abs(dest.width), dest.height, BLUE);
+    // DrawRectangleRec(GetCollisionRect(), Fade(RED, 0.4f));
+    // DrawRectangleLines(dest.x, dest.y, abs(dest.width), dest.height, BLUE);
 }
 
 Player::~Player() { UnloadTexture(idleTexture); }

@@ -10,7 +10,7 @@ int main() {
     InitWindow(screenWidth, screenHeight, "Pixel Platformer");
     SetTargetFPS(60);
 
-    Player player(100, 100);
+    Player player(100, 400);
 
     std::vector<Platform> platforms;
     platforms.push_back(Platform(0, 500, 800, 20)); // Ground

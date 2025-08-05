@@ -28,6 +28,7 @@ class Player {
         static constexpr int SPRITE_FRAME_HEIGHT = 128;
 
         PlayerState state = PlayerState::Idle;
+        PlayerState lastState = PlayerState::Idle;
 
         float desiredScale = 2;
         float width = 128 * desiredScale;
@@ -40,7 +41,10 @@ class Player {
 
         // Animation for idle
         AnimationController animation;
+        Texture2D currentTexture;
         Texture2D idleTexture;
+        Texture2D walkTexture;
+        Texture2D jumpTexture;
 
         int facing = 1; // Direction facing 1 = right -1 = left
 
