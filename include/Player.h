@@ -6,17 +6,31 @@
 #include "raylib.h"
 #include <vector>
 
-enum class PlayerState { Idle, Walking, Jumping, Falling, Dashing };
+enum class PlayerState { None, Idle, Walking, Jumping, Falling, Dashing };
 
 class Player {
     public:
         Player(float x, float y);
+
+        // Getters
+        Vector2 GetPosition() const;
+        float GetWidth() const;
+        float GetHeight() const;
+        Vector2 GetCenter() const;
+        Vector2 GetVelocity() const;
+
+        // Setters
+        void SetPosition(float x, float y);
+
         void Update(float deltaTime, const std::vector<Platform> &platforms);
         void Draw() const;
         void HandleInput(float deltaTime);
         void UpdateDash(float deltaTime);
         void ApplyGravity(float deltaTime);
-        void ResolvePlatformCollisions(const std::vector<Platform> &platforms,
+
+        void
+        ResolveHorizontalCollisions(const std::vector<Platform> &platforms);
+        void ResolveVerticalCollisions(const std::vector<Platform> &platforms,
                                        float deltaTime);
         void UpdateState();
         void HandleJump(float deltaTime);
@@ -30,7 +44,7 @@ class Player {
         PlayerState state = PlayerState::Idle;
         PlayerState lastState = PlayerState::Idle;
 
-        float desiredScale = 2;
+        float desiredScale = 1.5;
         float width = 128 * desiredScale;
         float height = 128 * desiredScale;
         float hitboxWidth = 18.0f;
@@ -45,6 +59,7 @@ class Player {
         Texture2D idleTexture;
         Texture2D walkTexture;
         Texture2D jumpTexture;
+        Texture2D landTexture;
 
         int facing = 1; // Direction facing 1 = right -1 = left
 

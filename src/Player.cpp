@@ -1,6 +1,4 @@
 #include "Player.h"
-#include "Physics.h"
-#include "iostream"
 #include "raylib.h"
 
 Player::Player(float x, float y) {
@@ -9,22 +7,37 @@ Player::Player(float x, float y) {
 
     // texture = LoadTexture("assets/player.png");
     idleTexture = LoadTexture("assets/player_animations/Idle.png");
-    walkTexture = LoadTexture("assets/player_animations/Walk.png");
+    walkTexture = LoadTexture("assets/player_animations/Sprint.png");
     jumpTexture = LoadTexture("assets/player_animations/Jump.png");
+    landTexture = LoadTexture("assets/player_animations/Land on Ground.png");
 
     // for pixel art sharpness
     SetTextureFilter(idleTexture, TEXTURE_FILTER_POINT);
     SetTextureFilter(walkTexture, TEXTURE_FILTER_POINT);
     SetTextureFilter(jumpTexture, TEXTURE_FILTER_POINT);
+    SetTextureFilter(landTexture, TEXTURE_FILTER_POINT);
 
-    // idle anim
+    currentTexture = idleTexture;
     animation.Set(0, 4, 0.2f);
+    lastState = PlayerState::None;
 
     float spriteWidth = SPRITE_FRAME_WIDTH * desiredScale;
 
     offsetX = (spriteWidth - hitboxWidth * desiredScale) / 2.0f;
     offsetY = 46 * desiredScale;
 }
+
+Vector2 Player::GetPosition() const { return position; }
+
+float Player::GetWidth() const { return hitboxWidth * desiredScale; }
+
+float Player::GetHeight() const { return hitboxHeight * desiredScale; }
+
+Vector2 Player::GetCenter() const {
+    return {position.x + GetWidth() / 2, position.y + GetHeight() / 2};
+}
+
+Vector2 Player::GetVelocity() const { return velocity; }
 
 void Player::HandleInput(float deltaTime) {
     // Horizontal movement input
@@ -77,32 +90,70 @@ void Player::ApplyGravity(float deltaTime) {
     velocity.y += gravity * deltaTime;
 }
 
-void Player::ResolvePlatformCollisions(const std::vector<Platform> &platforms,
-                                       float deltaTime) {
-    // predict future position
+void Player::ResolveHorizontalCollisions(
+    const std::vector<Platform> &platforms) {
     Rectangle playerRect = GetCollisionRect();
-    std::cout << "deltaTime in collision: " << deltaTime << std::endl;
-    Rectangle futureRect = {playerRect.x, playerRect.y + velocity.y * deltaTime,
-                            playerRect.width, playerRect.height};
 
-    // Check for platform collisions
     for (const Platform &platform : platforms) {
         Rectangle platformBounds = platform.GetBounds();
 
-        bool fallingThroughPlatform = Physics::ShouldLandOnPlatform(
-            playerRect, futureRect, platformBounds, velocity.y);
-        if (fallingThroughPlatform) {
-            // Snap player to platform
-            position.y = platformBounds.y - hitboxHeight * desiredScale;
-            velocity.y = 0;
+        if (CheckCollisionRecs(playerRect, platformBounds)) {
+            if (velocity.x > 0) {
+                // Moving right → hit left side of platform
+                position.x = platformBounds.x - playerRect.width;
+            } else if (velocity.x < 0) {
+                // Moving left → hit right side of platform
+                position.x = platformBounds.x + platformBounds.width;
+            }
 
-            if (state != PlayerState::Dashing)
-                state = (xMove == 0) ? PlayerState::Idle : PlayerState::Walking;
-
-            timeSinceLeftGround = 0.0f;
-            hasDashed = false;
+            velocity.x = 0;
             break;
         }
+    }
+}
+
+void Player::ResolveVerticalCollisions(const std::vector<Platform> &platforms,
+                                       float deltaTime) {
+    Rectangle playerRect = GetCollisionRect();
+
+    bool landed = false;
+
+    for (const Platform &platform : platforms) {
+        Rectangle platformBounds = platform.GetBounds();
+
+        if (CheckCollisionRecs(playerRect, platformBounds)) {
+            if (velocity.y > 0) {
+                // Falling → land on platform
+                position.y = platformBounds.y - playerRect.height;
+                velocity.y = 0;
+                landed = true;
+
+                // Only switch state if not dashing
+                if (state != PlayerState::Dashing) {
+                    state =
+                        (xMove == 0) ? PlayerState::Idle : PlayerState::Walking;
+                }
+
+                timeSinceLeftGround = 0.0f;
+                hasDashed = false;
+            } else if (velocity.y < 0) {
+                // Jumping → hit ceiling
+                position.y = platformBounds.y + platformBounds.height;
+                velocity.y = 0;
+            }
+
+            break;
+        }
+    }
+
+    if (!landed && state != PlayerState::Dashing) {
+        // We're in the air → falling or jumping
+        if (velocity.y < 0)
+            state = PlayerState::Jumping;
+        else if (velocity.y > 0)
+            state = PlayerState::Falling;
+
+        timeSinceLeftGround += deltaTime;
     }
 }
 
@@ -118,6 +169,7 @@ void Player::UpdateState() {
             state = PlayerState::Idle;
         }
     }
+    // Animation Controller
     if (state != lastState) {
         switch (state) {
         case PlayerState::Idle:
@@ -134,7 +186,7 @@ void Player::UpdateState() {
             break;
         case PlayerState::Falling:
             currentTexture = jumpTexture;
-            animation.Set(0, 4, 0.2f);
+            animation.Set(0, 4, 0.3f);
             break;
         case PlayerState::Dashing:
             break;
@@ -160,19 +212,20 @@ void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
     animation.Update(deltaTime);
     HandleInput(deltaTime);
     UpdateDash(deltaTime);
+    ApplyGravity(deltaTime);
 
     // Apply horizontal movement
     if (state != PlayerState::Dashing)
         velocity.x = xMove;
 
-    ApplyGravity(deltaTime);
-    ResolvePlatformCollisions(platforms, deltaTime);
-    HandleJump(deltaTime);
-    UpdateState();
-
     // Update position
     position.x += velocity.x * deltaTime;
+    ResolveHorizontalCollisions(platforms);
     position.y += velocity.y * deltaTime;
+    ResolveVerticalCollisions(platforms, deltaTime);
+
+    HandleJump(deltaTime);
+    UpdateState();
 }
 
 Rectangle Player::GetCollisionRect() const {
@@ -202,4 +255,5 @@ Player::~Player() {
     UnloadTexture(idleTexture);
     UnloadTexture(walkTexture);
     UnloadTexture(jumpTexture);
+    UnloadTexture(landTexture);
 }

@@ -13,6 +13,7 @@ class Platform {
         static void UnloadTileset();
 
         bool IsFloatingPlatform() const;
+        bool IsSingleTilePlatform() const;
         int GetTileRow(int y) const;
         int GetTileCol(int x) const;
 

@@ -11,4 +11,8 @@ bool ShouldLandOnPlatform(const Rectangle &player, const Rectangle &future,
            player.x < platform.x + platform.width;
 }
 
+bool IsTouchingSide(const Rectangle &playerFuture, const Rectangle &platform) {
+    return CheckCollisionRecs(playerFuture, platform);
+}
+
 } // namespace Physics

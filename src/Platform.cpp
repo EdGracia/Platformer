@@ -13,14 +13,17 @@ Rectangle Platform::GetBounds() const {
 }
 
 void Platform::LoadTileset() {
-    tileset = LoadTexture("assets/tileset/0_Template_Tileset.png");
-    // tileset = LoadTexture("assets/tileset/1_Industrial_Tileset_1B.png");
+    // tileset = LoadTexture("assets/tileset/0_Template_Tileset.png");
+    tileset = LoadTexture("assets/tileset/1_Industrial_Tileset_1B.png");
     SetTextureFilter(tileset, TEXTURE_FILTER_POINT);
 }
 
 void Platform::UnloadTileset() { UnloadTexture(tileset); }
 
 bool Platform::IsFloatingPlatform() const { return height <= TILE_SIZE; }
+bool Platform::IsSingleTilePlatform() const {
+    return (int)width == TILE_SIZE && (int)height == TILE_SIZE;
+}
 
 int Platform::GetTileRow(int y) const {
     if (IsFloatingPlatform())
@@ -45,9 +48,15 @@ void Platform::Draw() const {
     for (int x = 0; x < width; x += TILE_SIZE) {
         for (int y = 0; y < height; y += TILE_SIZE) {
             Rectangle source;
-
-            int tileRow = GetTileRow(y);
-            int tileCol = GetTileCol(x);
+            int tileRow;
+            int tileCol;
+            if (!IsSingleTilePlatform()) {
+                tileRow = GetTileRow(y);
+                tileCol = GetTileCol(x);
+            } else {
+                tileRow = 0;
+                tileCol = 3;
+            }
 
             source = {(float)tileCol * TILE_SIZE, (float)tileRow * TILE_SIZE,
                       (float)TILE_SIZE, (float)TILE_SIZE};
@@ -56,6 +65,8 @@ void Platform::Draw() const {
                               (float)TILE_SIZE};
 
             DrawTexturePro(tileset, source, dest, {0, 0}, 0.0f, WHITE);
+            // HITBOX DEBUG:
+            // DrawRectangleLinesEx(GetBounds(), 3.0f, Fade(GREEN, 0.5f));
         }
     }
 }
