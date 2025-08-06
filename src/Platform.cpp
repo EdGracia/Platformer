@@ -4,7 +4,8 @@
 Texture2D Platform::tileset;
 
 Platform::Platform(float x, float y, float width, float height)
-    : position({x, y}),
+    : GameObject(x, y),
+      position({x, y}),
       width(width),
       height(height) {}
 
@@ -43,6 +44,7 @@ int Platform::GetTileCol(int x) const {
     return 1;
 }
 
+void Platform::Update(float deltaTime) {}
 void Platform::Draw() const {
     // Draw a grid of tiles across the platform’s size
     for (int x = 0; x < width; x += TILE_SIZE) {

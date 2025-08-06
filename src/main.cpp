@@ -11,8 +11,10 @@ int main() {
     InitWindow(screenWidth, screenHeight, "Pixel Platformer");
     SetTargetFPS(60);
 
+    std::vector<GameObject *> gameObjects;
+
     // Player Setup
-    Player player(100, 200);
+    Player player(100, 10);
     Platform::LoadTileset();
 
     // Platform Setup
@@ -25,6 +27,11 @@ int main() {
     platforms.push_back(Platform(100, 150, 96, 96));
     platforms.push_back(Platform(600, 250, 32, 32));
 
+    player.SetPlatforms(platforms);
+
+    gameObjects.push_back(&player);
+    for (Platform &p : platforms)
+        gameObjects.push_back(&p);
     // Camera Setup
     CameraController camera((float)GetScreenWidth(), (float)GetScreenHeight());
 
@@ -39,13 +46,10 @@ int main() {
         camera.Update(deltaTime);
         camera.Apply();
 
-        // Player Handling
-        player.Update(deltaTime, platforms);
-        player.Draw();
-
-        // Draw Platforms
-        for (const Platform &platform : platforms) {
-            platform.Draw();
+        // update and Draw all game objects
+        for (GameObject *obj : gameObjects) {
+            obj->Update(deltaTime);
+            obj->Draw();
         }
 
         EndMode2D();

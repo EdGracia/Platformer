@@ -2,15 +2,17 @@
 #define PLAYER_H
 
 #include "AnimationController.h"
+#include "GameObject.h"
 #include "Platform.h"
 #include "raylib.h"
 #include <vector>
 
 enum class PlayerState { None, Idle, Walking, Jumping, Falling, Dashing };
 
-class Player {
+class Player : public GameObject {
     public:
         Player(float x, float y);
+        ~Player();
 
         // Getters
         Vector2 GetPosition() const;
@@ -21,9 +23,11 @@ class Player {
 
         // Setters
         void SetPosition(float x, float y);
+        void SetPlatforms(std::vector<Platform> &platforms_);
 
         void Update(float deltaTime, const std::vector<Platform> &platforms);
-        void Draw() const;
+        void Update(float deltaTime) override;
+        void Draw() const override;
         void HandleInput(float deltaTime);
         void UpdateDash(float deltaTime);
         void ApplyGravity(float deltaTime);
@@ -35,7 +39,6 @@ class Player {
         void UpdateState();
         void HandleJump(float deltaTime);
         Rectangle GetCollisionRect() const;
-        ~Player();
 
     private:
         static constexpr int SPRITE_FRAME_WIDTH = 128;
@@ -63,6 +66,7 @@ class Player {
 
         int facing = 1; // Direction facing 1 = right -1 = left
 
+        // Vector2 position;
         Vector2 position;
         Vector2 velocity;
         float xMove = 0.0f;
@@ -71,11 +75,12 @@ class Player {
         float gravity = 600.0f;
         float jumpForce = -350.0f;
 
+        // for jump
         float coyoteTime = 0.1f; // Allow 100 ms of grace
         float timeSinceLeftGround = 0.0f;
         float jumpBufferTime = 0.1f; // 100ms of window to store jump input
         float timeSinceJumpPressed = jumpBufferTime + 1.0f;
-
+        // for dash
         bool hasDashed = false;
         float dashTime = 0.0f;
         const float dashDuration = 0.15f;
@@ -83,6 +88,8 @@ class Player {
         const float dashCooldown = 0.5f;
         float timeSinceLastDash = dashCooldown + 1.0f;
         Vector2 dashDirection = {0, 0};
+
+        std::vector<Platform> platforms;
 };
 
 #endif

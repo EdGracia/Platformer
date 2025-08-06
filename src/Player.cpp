@@ -1,7 +1,8 @@
 #include "Player.h"
 #include "raylib.h"
 
-Player::Player(float x, float y) {
+Player::Player(float x, float y)
+    : GameObject(x, y) {
     position = {x, y};
     velocity = {0, 0};
 
@@ -38,6 +39,12 @@ Vector2 Player::GetCenter() const {
 }
 
 Vector2 Player::GetVelocity() const { return velocity; }
+
+void Player::SetPosition(float x, float y) { position = {x, y}; }
+
+void Player::SetPlatforms(std::vector<Platform> &platforms_) {
+    platforms = platforms_;
+}
 
 void Player::HandleInput(float deltaTime) {
     // Horizontal movement input
@@ -172,6 +179,8 @@ void Player::UpdateState() {
     // Animation Controller
     if (state != lastState) {
         switch (state) {
+        case PlayerState::None:
+            break;
         case PlayerState::Idle:
             currentTexture = idleTexture;
             animation.Set(0, 3, 0.2f); // row, frame count, frame time
@@ -208,6 +217,7 @@ void Player::HandleJump(float deltaTime) {
     }
 }
 
+void Player::Update(float deltaTime) { Update(deltaTime, platforms); }
 void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
     animation.Update(deltaTime);
     HandleInput(deltaTime);

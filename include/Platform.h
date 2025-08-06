@@ -1,12 +1,15 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
+#include "GameObject.h"
 #include "raylib.h"
 
-class Platform {
+class Platform : public GameObject {
     public:
         Platform(float x, float y, float width, float height);
-        void Draw() const;
+
+        void Update(float deltaTime);
+        void Draw() const override;
         Rectangle GetBounds() const;
 
         static void LoadTileset();
