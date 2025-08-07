@@ -6,6 +6,8 @@
 class GameObject {
     protected:
         Vector2 position;
+        Vector2 velocity;
+        float rotation = 0.0f;
 
     public:
         GameObject(float x, float y);
@@ -18,6 +20,12 @@ class GameObject {
 
         Vector2 GetPosition() const;
         void SetPosition(Vector2 pos);
+
+        Vector2 GetVelocity() const;
+        void SetVelocity(Vector2 velo);
+
+        float GetRotation() const;
+        void SetRotation(float r);
 };
 
 #endif

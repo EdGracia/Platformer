@@ -21,7 +21,6 @@ class Platform : public GameObject {
         int GetTileCol(int x) const;
 
     private:
-        Vector2 position;
         float width, height;
 
         static Texture2D tileset;

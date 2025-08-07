@@ -21,7 +21,6 @@ Player::Player(float x, float y)
     currentTexture = idleTexture;
     animation.Set(0, 4, 0.2f);
     lastState = PlayerState::None;
-
     float spriteWidth = SPRITE_FRAME_WIDTH * desiredScale;
 
     offsetX = (spriteWidth - hitboxWidth * desiredScale) / 2.0f;
@@ -165,7 +164,7 @@ void Player::ResolveVerticalCollisions(const std::vector<Platform> &platforms,
 }
 
 void Player::UpdateState() {
-    if (state != PlayerState::Dashing) {
+    if (state != PlayerState::Dashing && state != PlayerState::Landing) {
         if (velocity.y < 0) {
             state = PlayerState::Jumping;
         } else if (velocity.y > 0) {
@@ -197,6 +196,9 @@ void Player::UpdateState() {
             currentTexture = jumpTexture;
             animation.Set(0, 4, 0.3f);
             break;
+        case PlayerState::Landing:
+            currentTexture = landTexture;
+            animation.Set(0, 4, 0.1f);
         case PlayerState::Dashing:
             break;
         }

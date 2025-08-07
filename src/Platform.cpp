@@ -5,7 +5,6 @@ Texture2D Platform::tileset;
 
 Platform::Platform(float x, float y, float width, float height)
     : GameObject(x, y),
-      position({x, y}),
       width(width),
       height(height) {}
 

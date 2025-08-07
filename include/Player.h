@@ -7,7 +7,15 @@
 #include "raylib.h"
 #include <vector>
 
-enum class PlayerState { None, Idle, Walking, Jumping, Falling, Dashing };
+enum class PlayerState {
+    None,
+    Idle,
+    Walking,
+    Jumping,
+    Falling,
+    Landing,
+    Dashing
+};
 
 class Player : public GameObject {
     public:
@@ -66,9 +74,7 @@ class Player : public GameObject {
 
         int facing = 1; // Direction facing 1 = right -1 = left
 
-        // Vector2 position;
-        Vector2 position;
-        Vector2 velocity;
+        // Factor of horizontal movement
         float xMove = 0.0f;
 
         float moveSpeed = 200.0f;

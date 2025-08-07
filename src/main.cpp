@@ -37,7 +37,7 @@ int main() {
 
     while (!WindowShouldClose()) {
         BeginDrawing();
-        ClearBackground(SKYBLUE);
+        ClearBackground(LIGHTGRAY);
         float deltaTime = GetFrameTime();
 
         // cameraHandling
