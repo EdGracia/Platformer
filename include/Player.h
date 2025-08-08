@@ -78,8 +78,8 @@ class Player : public GameObject {
         float xMove = 0.0f;
 
         float moveSpeed = 200.0f;
-        float gravity = 600.0f;
-        float jumpForce = -350.0f;
+        float gravity = 800.0f;
+        float jumpForce = -400.0f;
 
         // for jump
         float coyoteTime = 0.1f; // Allow 100 ms of grace
@@ -89,8 +89,8 @@ class Player : public GameObject {
         // for dash
         bool hasDashed = false;
         float dashTime = 0.0f;
-        const float dashDuration = 0.15f;
-        const float dashSpeed = 500.0f;
+        const float dashDuration = 0.2f;
+        const float dashSpeed = 550.0f;
         const float dashCooldown = 0.5f;
         float timeSinceLastDash = dashCooldown + 1.0f;
         Vector2 dashDirection = {0, 0};
