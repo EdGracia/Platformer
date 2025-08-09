@@ -1,18 +1,20 @@
 #include "Platform.h"
+#include "GameObject.h"
+#include "TilesetResolver.h"
 #include "raylib.h"
 
-Platform::Platform(float x, float y, float width, float height,
-                   Texture2D tileset)
+Platform::Platform(float x, float y, float width, float height, Layer lay)
     : GameObject(x, y),
       width(width),
-      height(height),
-      tileset(tileset) {}
+      height(height) {
+    position = {x, y};
+    tag = Tag::Platform;
+    layer = lay;
+}
 
 Rectangle Platform::GetBounds() const {
     return Rectangle{position.x, position.y, width, height};
 }
-
-void Platform::UnloadTileset() { UnloadTexture(tileset); }
 
 bool Platform::IsFloatingPlatform() const { return height <= TILE_SIZE; }
 bool Platform::IsSingleTilePlatform() const {
@@ -39,6 +41,9 @@ int Platform::GetTileCol(int x) const {
 
 void Platform::Update(float deltaTime) {}
 void Platform::Draw() const {
+    if (!resolver)
+        return;
+    const Texture2D &tex = resolver->For(layer);
     // Draw a grid of tiles across the platform’s size
     for (int x = 0; x < width; x += TILE_SIZE) {
         for (int y = 0; y < height; y += TILE_SIZE) {
@@ -59,7 +64,7 @@ void Platform::Draw() const {
             Rectangle dest = {position.x + x, position.y + y, (float)TILE_SIZE,
                               (float)TILE_SIZE};
 
-            DrawTexturePro(tileset, source, dest, {0, 0}, 0.0f, WHITE);
+            DrawTexturePro(tex, source, dest, {0, 0}, 0.0f, WHITE);
             // HITBOX DEBUG:
             // DrawRectangleLinesEx(GetBounds(), 3.0f, Fade(GREEN, 0.5f));
         }

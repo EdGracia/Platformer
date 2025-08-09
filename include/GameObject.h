@@ -1,14 +1,8 @@
-#ifndef GAME_OBJECT_H
-#define GAME_OBJECT_H
-
+#pragma once
+#include "Types.h"
 #include "raylib.h"
 
 class GameObject {
-    protected:
-        Vector2 position;
-        Vector2 velocity;
-        float rotation = 0.0f;
-
     public:
         GameObject(float x, float y);
         virtual ~GameObject() = default;
@@ -26,6 +20,18 @@ class GameObject {
 
         float GetRotation() const;
         void SetRotation(float r);
-};
+        // Common transform
+        Vector2 position{0, 0};
+        Vector2 velocity{0, 0};
+        float rotation = 0.0f;
 
-#endif
+        // New metadata
+        Layer layer = Layer::Foreground;
+        Tag tag = Tag::None;
+
+        bool active = true; // for soft-deletion
+
+        // Tiny helpers
+        // bool IsOnLayer(Layer l) const { return layer == l; }
+        bool HasTag(Tag t) const { return tag == t; }
+};

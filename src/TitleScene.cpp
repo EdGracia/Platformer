@@ -20,5 +20,6 @@ void TitleScene::Update(float /*dt*/) {
 
 void TitleScene::Draw() const {
     ClearBackground(BLACK);
-    DrawText("Press ENTER to Start", 200, 260, 30, RAYWHITE);
+    DrawText("Press ENTER to Start", screenW / 2 - 200, screenH / 2, 30,
+             RAYWHITE);
 }

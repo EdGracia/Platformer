@@ -3,6 +3,7 @@
 #include "Platform.h"
 #include "Player.h"
 #include "Scene.h"
+#include "TilesetResolver.h"
 #include <vector>
 
 class GameScene : public Scene {
@@ -21,11 +22,12 @@ class GameScene : public Scene {
 
         // Game objects
         Player player;
-        std::vector<Platform> platforms;
+        std::vector<Platform> fgPlatforms;
         std::vector<Platform> bgPlatforms;
         CameraController camera;
         // any scene-local flags/vars go here
 
+        TilesetResolver tilesets;
         Texture2D fgTileset{};
         Texture2D bgTileset{}; // if you keep a handle here
 };

@@ -3,6 +3,8 @@
 
 Player::Player(float x, float y)
     : GameObject(x, y) {
+    tag = Tag::Player;
+    layer = Layer::Foreground;
     position = {x, y};
     velocity = {0, 0};
 

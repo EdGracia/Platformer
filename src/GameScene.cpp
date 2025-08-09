@@ -11,30 +11,38 @@ void GameScene::OnEnter() {
 
     // If you keep a local tileset handle (optional):
 
-    bgTileset = LoadTexture("assets/Platforms/1B_Background.png");
+    tilesets.bgTileset = LoadTexture("assets/Platforms/1B_Background.png");
     SetTextureFilter(bgTileset, TEXTURE_FILTER_POINT);
 
-    fgTileset = LoadTexture("assets/Platforms/1B_Foreground.png");
-    SetTextureFilter(bgTileset, TEXTURE_FILTER_POINT);
+    tilesets.fgTileset = LoadTexture("assets/Platforms/1B_Foreground.png");
+    SetTextureFilter(fgTileset, TEXTURE_FILTER_POINT);
 
     // Level geometry…
     bgPlatforms.clear();
-    bgPlatforms.push_back(Platform(100, 100, 64, 64, bgTileset));
+    bgPlatforms.push_back(Platform(100, 100, 64, 64, Layer::Background));
+    bgPlatforms.push_back(Platform(0, 300, 32, 32, Layer::Background));
+    bgPlatforms.push_back(Platform(300, 50, 32, 320, Layer::Background));
+    bgPlatforms.push_back(Platform(400, 450, 64, 64, Layer::Background));
 
-    player.SetPlatforms(platforms);
+    player.SetPlatforms(fgPlatforms);
 
     // Build your level
-    platforms.clear();
-    platforms.push_back(Platform(-500, 500, 1600, 95, fgTileset)); // Ground
-    platforms.push_back(Platform(100, 450, 64, 32, fgTileset));
-    platforms.push_back(Platform(200, 410, 64, 32, fgTileset));
-    platforms.push_back(Platform(300, 350, 64, 32, fgTileset));
-    platforms.push_back(Platform(400, 300, 96, 32, fgTileset));
-    platforms.push_back(Platform(100, 150, 96, 96, fgTileset));
-    platforms.push_back(Platform(600, 250, 32, 32, fgTileset));
+    fgPlatforms.clear();
+    fgPlatforms.push_back(Platform(-500, 500, 1600, 95)); // Ground
+    fgPlatforms.push_back(Platform(100, 450, 64, 32));
+    fgPlatforms.push_back(Platform(200, 410, 64, 32));
+    fgPlatforms.push_back(Platform(300, 350, 64, 32));
+    fgPlatforms.push_back(Platform(400, 300, 96, 32));
+    fgPlatforms.push_back(Platform(100, 150, 96, 96));
+    fgPlatforms.push_back(Platform(600, 250, 32, 32));
 
+    // Wire the resolver
+    for (auto &p : fgPlatforms)
+        p.SetTilesetResolver(&tilesets);
+    for (auto &p : bgPlatforms)
+        p.SetTilesetResolver(&tilesets);
     // If Player needs platform access internally:
-    player.SetPlatforms(platforms);
+    player.SetPlatforms(fgPlatforms);
 }
 
 void GameScene::OnExit() {
@@ -57,7 +65,7 @@ void GameScene::Update(float dt) {
     camera.Update(dt);
 
     // Platforms inherit GameObject now—if you ever have moving platforms:
-    for (auto &p : platforms)
+    for (auto &p : fgPlatforms)
         p.Update(dt);
 }
 
@@ -79,7 +87,7 @@ void GameScene::Draw() const {
 
     camera.Apply(); // BeginMode2D inside
     // Game Objects
-    for (const auto &p : platforms)
+    for (const auto &p : fgPlatforms)
         p.Draw();
     player.Draw();
 
