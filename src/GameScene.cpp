@@ -8,12 +8,35 @@ GameScene::GameScene(int w, int h)
       camera((float)w, (float)h) {}
 
 void GameScene::OnEnter() {
-    // Load shared tileset (if not already) & any scene assets
+
     Platform::LoadTileset();
+    camera.SetZoom(.1);
+
+    // If you keep a local tileset handle (optional):
+
+    bgTileset = LoadTexture("assets/Backgrounds/1B_Background.png");
+    SetTextureFilter(bgTileset, TEXTURE_FILTER_POINT);
+
+    // Level geometry…
+    platforms.clear();
+
+    player.SetPlatforms(platforms);
+
+    // Build background layers (example setup)
+    bgLayers.clear();
+    bgLayers.emplace_back(
+        /* tileset   */ bgTileset /* or Platform::tileset if public */,
+        /* tileSize  */ 32,
+        /* gridCols  */ 5,
+        /* gridRows  */ 5,
+        /* origin    */ Vector2{400.0f, 1000.0f},
+        /* factor    */ 0.01f);
+
+    bgLayers.emplace_back(bgTileset, 32, 2, 2, Vector2{300.0f, 280.0f}, 0.01f);
 
     // Build your level
     platforms.clear();
-    platforms.push_back(Platform(-100, 500, 1600, 95)); // Ground
+    platforms.push_back(Platform(-500, 500, 1600, 95)); // Ground
     platforms.push_back(Platform(100, 450, 64, 32));
     platforms.push_back(Platform(200, 410, 64, 32));
     platforms.push_back(Platform(300, 350, 64, 32));
@@ -27,8 +50,7 @@ void GameScene::OnEnter() {
 
 void GameScene::OnExit() {
     // Unload scene-local stuff if needed
-    Platform::UnloadTileset(); // if tileset is globally shared, you may move
-                               // this elsewhere
+    Platform::UnloadTileset();
 }
 
 void GameScene::HandleInput() {
@@ -52,11 +74,15 @@ void GameScene::Update(float dt) {
 
 void GameScene::Draw() const {
     BeginDrawing();
-    ClearBackground(SKYBLUE);
+    ClearBackground(Color{0xd8, 0xe4, 0xf4, 0xff});
 
     camera.Apply(); // BeginMode2D inside
 
-    // World
+    Vector2 camTarget = camera.GetTarget();
+    // Draw background layers first (far → near)
+    for (const auto &layer : bgLayers)
+        layer.Draw(camTarget);
+    // Game Objects
     for (const auto &p : platforms)
         p.Draw();
     player.Draw();

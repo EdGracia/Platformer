@@ -78,7 +78,7 @@ class Player : public GameObject {
         float xMove = 0.0f;
 
         float moveSpeed = 200.0f;
-        float gravity = 800.0f;
+        float gravity = 850.0f;
         float jumpForce = -400.0f;
 
         // for jump

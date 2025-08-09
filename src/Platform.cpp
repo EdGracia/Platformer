@@ -13,8 +13,8 @@ Rectangle Platform::GetBounds() const {
 }
 
 void Platform::LoadTileset() {
-    tileset = LoadTexture("assets/tileset/0_Template_Tileset.png");
-    // tileset = LoadTexture("assets/tileset/1_Industrial_Tileset_1B.png");
+    // tileset = LoadTexture("assets/tileset/0_Template_Tileset.png");
+    tileset = LoadTexture("assets/tileset/1_Industrial_Tileset_1B.png");
     SetTextureFilter(tileset, TEXTURE_FILTER_POINT);
 }
 
