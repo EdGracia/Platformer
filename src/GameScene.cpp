@@ -62,7 +62,6 @@ void GameScene::Update(float dt) {
 }
 
 void GameScene::Draw() const {
-    BeginDrawing();
     ClearBackground(Color{0xd8, 0xe4, 0xf4, 0xff});
 
     // Grab the main, already-smoothed camera as our base
@@ -88,6 +87,4 @@ void GameScene::Draw() const {
 
     // UI (not affected by camera)
     DrawText("Pixel Platformer", 10, 10, 20, WHITE);
-
-    EndDrawing();
 }

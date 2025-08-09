@@ -182,7 +182,7 @@ void Player::UpdateState() {
             break;
         case PlayerState::Idle:
             currentTexture = idleTexture;
-            animation.Set(0, 3, 0.2f); // row, frame count, frame time
+            animation.Set(0, 3, 0.3f); // row, frame count, frame time
             break;
         case PlayerState::Walking:
             currentTexture = walkTexture;
