@@ -7,7 +7,10 @@ class CameraController {
     public:
         CameraController(float screenWidth, float screenHeight);
 
+        Camera2D GetRaw() const;
         Vector2 GetTarget() const;
+        Vector2 GetOffset() const;
+        float GetZoom() const;
         void SetTarget(Vector2 newTarget);
         void Update(float deltaTime);
         void Apply() const;

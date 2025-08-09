@@ -7,6 +7,12 @@ CameraController::CameraController(float screenWidth, float screenHeight) {
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 }
+Camera2D CameraController::GetRaw() const { return camera; }
+
+Vector2 CameraController::GetOffset() const { return camera.offset; }
+
+float CameraController::GetZoom() const { return camera.zoom; }
+
 Vector2 CameraController::GetTarget() const { return target; }
 
 void CameraController::SetTarget(Vector2 newTarget) { target = newTarget; }

@@ -1,5 +1,4 @@
 #pragma once
-#include "BackgroundLayer.h"
 #include "CameraController.h"
 #include "Platform.h"
 #include "Player.h"
@@ -23,9 +22,10 @@ class GameScene : public Scene {
         // Game objects
         Player player;
         std::vector<Platform> platforms;
+        std::vector<Platform> bgPlatforms;
         CameraController camera;
         // any scene-local flags/vars go here
-        // Parallax/background tiles
+
+        Texture2D fgTileset{};
         Texture2D bgTileset{}; // if you keep a handle here
-        std::vector<BackgroundLayer> bgLayers;
 };

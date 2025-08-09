@@ -1,21 +1,15 @@
 #include "Platform.h"
 #include "raylib.h"
 
-Texture2D Platform::tileset;
-
-Platform::Platform(float x, float y, float width, float height)
+Platform::Platform(float x, float y, float width, float height,
+                   Texture2D tileset)
     : GameObject(x, y),
       width(width),
-      height(height) {}
+      height(height),
+      tileset(tileset) {}
 
 Rectangle Platform::GetBounds() const {
     return Rectangle{position.x, position.y, width, height};
-}
-
-void Platform::LoadTileset() {
-    // tileset = LoadTexture("assets/tileset/0_Template_Tileset.png");
-    tileset = LoadTexture("assets/tileset/1_Industrial_Tileset_1B.png");
-    SetTextureFilter(tileset, TEXTURE_FILTER_POINT);
 }
 
 void Platform::UnloadTileset() { UnloadTexture(tileset); }

@@ -9,48 +9,37 @@ GameScene::GameScene(int w, int h)
 
 void GameScene::OnEnter() {
 
-    Platform::LoadTileset();
-    camera.SetZoom(.1);
-
     // If you keep a local tileset handle (optional):
 
-    bgTileset = LoadTexture("assets/Backgrounds/1B_Background.png");
+    bgTileset = LoadTexture("assets/Platforms/1B_Background.png");
+    SetTextureFilter(bgTileset, TEXTURE_FILTER_POINT);
+
+    fgTileset = LoadTexture("assets/Platforms/1B_Foreground.png");
     SetTextureFilter(bgTileset, TEXTURE_FILTER_POINT);
 
     // Level geometry…
-    platforms.clear();
+    bgPlatforms.clear();
+    bgPlatforms.push_back(Platform(100, 100, 64, 64, bgTileset));
 
     player.SetPlatforms(platforms);
 
-    // Build background layers (example setup)
-    bgLayers.clear();
-    bgLayers.emplace_back(
-        /* tileset   */ bgTileset /* or Platform::tileset if public */,
-        /* tileSize  */ 32,
-        /* gridCols  */ 5,
-        /* gridRows  */ 5,
-        /* origin    */ Vector2{400.0f, 1000.0f},
-        /* factor    */ 0.01f);
-
-    bgLayers.emplace_back(bgTileset, 32, 2, 2, Vector2{300.0f, 280.0f}, 0.01f);
-
     // Build your level
     platforms.clear();
-    platforms.push_back(Platform(-500, 500, 1600, 95)); // Ground
-    platforms.push_back(Platform(100, 450, 64, 32));
-    platforms.push_back(Platform(200, 410, 64, 32));
-    platforms.push_back(Platform(300, 350, 64, 32));
-    platforms.push_back(Platform(400, 300, 96, 32));
-    platforms.push_back(Platform(100, 150, 96, 96));
-    platforms.push_back(Platform(600, 250, 32, 32));
+    platforms.push_back(Platform(-500, 500, 1600, 95, fgTileset)); // Ground
+    platforms.push_back(Platform(100, 450, 64, 32, fgTileset));
+    platforms.push_back(Platform(200, 410, 64, 32, fgTileset));
+    platforms.push_back(Platform(300, 350, 64, 32, fgTileset));
+    platforms.push_back(Platform(400, 300, 96, 32, fgTileset));
+    platforms.push_back(Platform(100, 150, 96, 96, fgTileset));
+    platforms.push_back(Platform(600, 250, 32, 32, fgTileset));
 
     // If Player needs platform access internally:
     player.SetPlatforms(platforms);
 }
 
 void GameScene::OnExit() {
-    // Unload scene-local stuff if needed
-    Platform::UnloadTileset();
+    UnloadTexture(fgTileset);
+    UnloadTexture(bgTileset);
 }
 
 void GameScene::HandleInput() {
@@ -76,12 +65,20 @@ void GameScene::Draw() const {
     BeginDrawing();
     ClearBackground(Color{0xd8, 0xe4, 0xf4, 0xff});
 
-    camera.Apply(); // BeginMode2D inside
+    // Grab the main, already-smoothed camera as our base
+    Camera2D base = camera.GetRaw();
+    Vector2 mainTarget = base.target;
 
-    Vector2 camTarget = camera.GetTarget();
-    // Draw background layers first (far → near)
-    for (const auto &layer : bgLayers)
-        layer.Draw(camTarget);
+    // === FAR BACKGROUND (moves least) ===
+    Camera2D farCam = base;
+    farCam.target = {mainTarget.x * 0.30f,
+                     mainTarget.y * 0.10f}; // small vertical factor
+    BeginMode2D(farCam);
+    for (const auto &p : bgPlatforms)
+        p.Draw(); // no changes inside Platform
+    EndMode2D();
+
+    camera.Apply(); // BeginMode2D inside
     // Game Objects
     for (const auto &p : platforms)
         p.Draw();

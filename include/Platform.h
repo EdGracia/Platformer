@@ -6,14 +6,14 @@
 
 class Platform : public GameObject {
     public:
-        Platform(float x, float y, float width, float height);
+        Platform(float x, float y, float width, float height,
+                 Texture2D tileset);
 
         void Update(float deltaTime);
         void Draw() const override;
         Rectangle GetBounds() const;
 
-        static void LoadTileset();
-        static void UnloadTileset();
+        void UnloadTileset();
 
         bool IsFloatingPlatform() const;
         bool IsSingleTilePlatform() const;
@@ -22,8 +22,8 @@ class Platform : public GameObject {
 
     private:
         float width, height;
-
-        static Texture2D tileset;
+        Texture2D tileset;
+        static Texture2D bgTileset;
         static constexpr int TILE_SIZE = 32;
 };
 
