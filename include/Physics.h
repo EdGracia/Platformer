@@ -42,6 +42,9 @@ bool ResolveVerticalOneWay(Vector2 &position, float &vy, const Rectangle &now,
 bool ResolveHorizontalSolid(Vector2 &position, float &vx, const Rectangle &now,
                             const Rectangle &plat, float dt);
 
+bool ResolveCeilingSolid(Vector2 &position, float &vy, const Rectangle &now,
+                         const Rectangle &plat, float dt);
+
 // Debug overlay (call from scene when toggled)
 void DrawDebug(const Rectangle &now, const Rectangle &future,
                const std::vector<Platform> &platforms,

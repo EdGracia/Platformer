@@ -62,6 +62,38 @@ bool ResolveHorizontalSolid(Vector2 &position, float &vx, const Rectangle &now,
     return false;
 }
 
+bool Physics::ResolveCeilingSolid(Vector2 &position, float &vy,
+                                  const Rectangle &now, const Rectangle &plat,
+                                  float dt) {
+    if (vy >= 0.0f)
+        return false; // only when moving up
+
+    // Horizontal overlap required
+    bool xOverlap =
+        (now.x + now.width) > plat.x && now.x < (plat.x + plat.width);
+    if (!xOverlap)
+        return false;
+
+    // Predict Y movement only
+    Rectangle futureY{now.x, now.y + vy * dt, now.width, now.height};
+
+    // Was below the platform bottom; will cross it
+    float platBottom = plat.y + plat.height;
+    bool wasBelow = now.y >= platBottom;
+    bool willCross = futureY.y < platBottom;
+    if (!(wasBelow && willCross))
+        return false;
+
+    // Snap so the player's top touches the platform bottom.
+    // Account for hitbox offset (position is sprite origin, now.y is hitbox
+    // top):
+    float offsetY = now.y - position.y;
+    position.y = platBottom - offsetY; // top = platBottom
+
+    vy = 0.0f; // stop upward motion
+    return true;
+}
+
 void DrawDebug(const Rectangle &now, const Rectangle &future,
                const std::vector<Platform> &platforms,
                const std::vector<Rectangle> &hits) {

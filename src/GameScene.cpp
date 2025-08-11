@@ -21,7 +21,7 @@ void GameScene::OnEnter() {
     bgPlatforms.push_back(Platform(100, 100, 64, 64, Layer::Background));
     bgPlatforms.push_back(Platform(0, 300, 32, 32, Layer::Background));
     bgPlatforms.push_back(Platform(300, 50, 32, 320, Layer::Background));
-    bgPlatforms.push_back(Platform(400, 450, 64, 64, Layer::Background));
+    bgPlatforms.push_back(Platform(0, 50, 64, 64, Layer::Background));
 
     player.SetPlatforms(fgPlatforms);
 

@@ -174,6 +174,19 @@ void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
         }
     }
 
+    // Upward (ceiling) collisions
+    if (velocity.y < 0.0f) {
+        for (const Platform &p : platforms) {
+            if (Physics::ResolveCeilingSolid(position, velocity.y, now,
+                                             p.GetBounds(), deltaTime)) {
+                // Rebuild rects after snap
+                now = GetCollisionRect();
+                future = Physics::FutureRect(now, velocity, deltaTime);
+                break;
+            }
+        }
+    }
+
     // Vertical one way landing
     bool landed = false;
     for (const Platform &p : platforms) {
