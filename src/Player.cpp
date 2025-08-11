@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "Physics.h"
 #include "raylib.h"
 
 Player::Player(float x, float y)
@@ -8,7 +9,6 @@ Player::Player(float x, float y)
     position = {x, y};
     velocity = {0, 0};
 
-    // texture = LoadTexture("assets/player.png");
     idleTexture = LoadTexture("assets/player_animations/Idle.png");
     walkTexture = LoadTexture("assets/player_animations/Sprint.png");
     jumpTexture = LoadTexture("assets/player_animations/Jump.png");
@@ -93,78 +93,6 @@ void Player::UpdateDash(float deltaTime) {
     }
 }
 
-void Player::ApplyGravity(float deltaTime) {
-
-    velocity.y += gravity * deltaTime;
-}
-
-void Player::ResolveHorizontalCollisions(
-    const std::vector<Platform> &platforms) {
-    Rectangle playerRect = GetCollisionRect();
-
-    for (const Platform &platform : platforms) {
-        Rectangle platformBounds = platform.GetBounds();
-
-        if (CheckCollisionRecs(playerRect, platformBounds)) {
-            if (velocity.x > 0) {
-                // Moving right → hit left side of platform
-                position.x = platformBounds.x - playerRect.width;
-            } else if (velocity.x < 0) {
-                // Moving left → hit right side of platform
-                position.x = platformBounds.x + platformBounds.width;
-            }
-
-            velocity.x = 0;
-            break;
-        }
-    }
-}
-
-void Player::ResolveVerticalCollisions(const std::vector<Platform> &platforms,
-                                       float deltaTime) {
-    Rectangle playerRect = GetCollisionRect();
-
-    bool landed = false;
-
-    for (const Platform &platform : platforms) {
-        Rectangle platformBounds = platform.GetBounds();
-
-        if (CheckCollisionRecs(playerRect, platformBounds)) {
-            if (velocity.y > 0) {
-                // Falling → land on platform
-                position.y = platformBounds.y - playerRect.height;
-                velocity.y = 0;
-                landed = true;
-
-                // Only switch state if not dashing
-                if (state != PlayerState::Dashing) {
-                    state =
-                        (xMove == 0) ? PlayerState::Idle : PlayerState::Walking;
-                }
-
-                timeSinceLeftGround = 0.0f;
-                hasDashed = false;
-            } else if (velocity.y < 0) {
-                // Jumping → hit ceiling
-                position.y = platformBounds.y + platformBounds.height;
-                velocity.y = 0;
-            }
-
-            break;
-        }
-    }
-
-    if (!landed && state != PlayerState::Dashing) {
-        // We're in the air → falling or jumping
-        if (velocity.y < 0)
-            state = PlayerState::Jumping;
-        else if (velocity.y > 0)
-            state = PlayerState::Falling;
-
-        timeSinceLeftGround += deltaTime;
-    }
-}
-
 void Player::UpdateState() {
     if (state != PlayerState::Dashing && state != PlayerState::Landing) {
         if (velocity.y < 0) {
@@ -226,19 +154,64 @@ void Player::Update(float deltaTime, const std::vector<Platform> &platforms) {
     animation.Update(deltaTime);
     HandleInput(deltaTime);
     UpdateDash(deltaTime);
-    ApplyGravity(deltaTime);
+
+    Physics::ApplyGravity(velocity.y, deltaTime, gravity);
 
     // Apply horizontal movement
     if (state != PlayerState::Dashing)
         velocity.x = xMove;
 
+    Rectangle now = GetCollisionRect();
+    Rectangle future = Physics::FutureRect(now, velocity, deltaTime);
+
+    // Horizontal (side wall) collisions
+    for (const Platform &p : platforms) {
+        if (Physics::ResolveHorizontalSolid(position, velocity.x, now,
+                                            p.GetBounds(), deltaTime)) {
+            // update 'now' since position.x changed
+            now = GetCollisionRect();
+            future = Physics::FutureRect(now, velocity, deltaTime);
+        }
+    }
+
+    // Vertical one way landing
+    bool landed = false;
+    for (const Platform &p : platforms) {
+        Rectangle plat = p.GetBounds();
+        if (Physics::ShouldLandOnPlatform(now, future, plat, velocity.y,
+                                          /*feetPad=*/4.0f)) {
+            Physics::ResolveVerticalOneWay(position, velocity.y, now, plat,
+                                           hitboxHeight, desiredScale,
+                                           /*feetPad=*/4.0f);
+            landed = true;
+            // reset state/timers on land
+            timeSinceLeftGround = 0.0f;
+            hasDashed = false;
+            state = (xMove == 0) ? PlayerState::Idle : PlayerState::Walking;
+            break;
+        }
+    }
+
+    // Track coyote/jump buffer timers
+    if (landed) {
+        timeSinceLeftGround = 0.0f;
+    } else {
+        if (state == PlayerState::Falling || state == PlayerState::Jumping)
+            timeSinceLeftGround += deltaTime;
+    }
+
+    // 7) Jump buffer + coyote check (your existing logic)
+    if (timeSinceLeftGround <= coyoteTime &&
+        timeSinceJumpPressed <= jumpBufferTime) {
+        velocity.y = jumpForce;
+        state = PlayerState::Jumping;
+        timeSinceLeftGround = coyoteTime + 1.0f; // consume
+    }
+
     // Update position
     position.x += velocity.x * deltaTime;
-    ResolveHorizontalCollisions(platforms);
     position.y += velocity.y * deltaTime;
-    ResolveVerticalCollisions(platforms, deltaTime);
 
-    HandleJump(deltaTime);
     UpdateState();
 }
 

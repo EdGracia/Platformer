@@ -38,12 +38,12 @@ class Player : public GameObject {
         void Draw() const override;
         void HandleInput(float deltaTime);
         void UpdateDash(float deltaTime);
-        void ApplyGravity(float deltaTime);
+        // void ApplyGravity(float deltaTime);
 
-        void
-        ResolveHorizontalCollisions(const std::vector<Platform> &platforms);
-        void ResolveVerticalCollisions(const std::vector<Platform> &platforms,
-                                       float deltaTime);
+        // void
+        // ResolveHorizontalCollisions(const std::vector<Platform> &platforms);
+        // void ResolveVerticalCollisions(const std::vector<Platform>
+        // &platforms, float deltaTime);
         void UpdateState();
         void HandleJump(float deltaTime);
         Rectangle GetCollisionRect() const;

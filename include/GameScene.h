@@ -26,6 +26,7 @@ class GameScene : public Scene {
         std::vector<Platform> bgPlatforms;
         CameraController camera;
         // any scene-local flags/vars go here
+        bool debugPhysics = false;
 
         TilesetResolver tilesets;
         Texture2D fgTileset{};

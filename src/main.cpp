@@ -22,11 +22,10 @@ int main() {
         scenes.Update(dt);
         renderer.BeginWorld();
         // Your scenes should draw *world* (gameplay) here
-        scenes.Draw(); // Make Draw() only draw world; UI can also go here if
+        scenes.Draw();
         // it should scale
         renderer.EndWorld();
 
-        // If you have fixed-screen UI (menus, debug), you can do it *after*
         // Present by drawing directly to window.
         renderer.Present();
     }

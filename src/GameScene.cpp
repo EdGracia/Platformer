@@ -1,4 +1,5 @@
 #include "GameScene.h"
+#include "Physics.h"
 #include "raylib.h"
 
 GameScene::GameScene(int w, int h)
@@ -8,9 +9,7 @@ GameScene::GameScene(int w, int h)
       camera((float)w, (float)h) {}
 
 void GameScene::OnEnter() {
-
     // If you keep a local tileset handle (optional):
-
     tilesets.bgTileset = LoadTexture("assets/Platforms/1B_Background.png");
     SetTextureFilter(bgTileset, TEXTURE_FILTER_POINT);
 
@@ -67,6 +66,9 @@ void GameScene::Update(float dt) {
     // Platforms inherit GameObject now—if you ever have moving platforms:
     for (auto &p : fgPlatforms)
         p.Update(dt);
+
+    if (IsKeyPressed(KEY_F3))
+        debugPhysics = !debugPhysics;
 }
 
 void GameScene::Draw() const {
@@ -76,7 +78,7 @@ void GameScene::Draw() const {
     Camera2D base = camera.GetRaw();
     Vector2 mainTarget = base.target;
 
-    // === FAR BACKGROUND (moves least) ===
+    // === BACKGROUND (moves less) ===
     Camera2D farCam = base;
     farCam.target = {mainTarget.x * 0.30f,
                      mainTarget.y * 0.10f}; // small vertical factor
@@ -90,6 +92,13 @@ void GameScene::Draw() const {
     for (const auto &p : fgPlatforms)
         p.Draw();
     player.Draw();
+
+    if (debugPhysics) {
+        Rectangle now = player.GetCollisionRect();
+        Vector2 vel = player.GetVelocity();
+        Rectangle future = Physics::FutureRect(now, vel, GetFrameTime());
+        Physics::DrawDebug(now, future, fgPlatforms);
+    }
 
     EndMode2D();
 
